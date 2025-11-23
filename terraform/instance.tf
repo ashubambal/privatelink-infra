@@ -4,7 +4,9 @@ resource "aws_instance" "ubuntu-machine" {
   key_name               = aws_key_pair.private-link-key-1.key_name
   vpc_security_group_ids = [aws_security_group.private-sg.id]
   tags = {
-    Name = "UbuntuInstance"
+    Name  = "infrastructure"
+    Owner = "CNC-Team"
+    email = "cnc@nice.com"
   }
 }
 
@@ -14,14 +16,14 @@ resource "aws_key_pair" "private-link-key-1" {
 
 }
 
-data "aws_vpc" "default" {
-  default = true
+resource "aws_default_vpc" "default" {
+
 }
 
 resource "aws_security_group" "private-sg" {
   name        = "private-sg"
   description = "Security group for private link instance"
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = aws_default_vpc.default.id
 
   egress {
     from_port        = 0
@@ -38,6 +40,30 @@ resource "aws_security_group" "private-sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-}
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
-  
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name  = "infrastructure"
+    Owner = "CNC-Team"
+    email = "cnc@nice.com"
+  }
+}
