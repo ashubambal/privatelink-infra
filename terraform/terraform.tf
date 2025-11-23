@@ -7,10 +7,10 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "ashutsoh-privatelink-infra-terraform-state-file"
-    key            = "terraform.tfstate"
-    region         = "ap-south-1"
-    encrypt        = true
+    bucket  = "ashutsoh-privatelink-infra-terraform-state-file-1"
+    key     = "terraform.tfstate"
+    region  = "ap-south-1"
+    encrypt = true
   }
 }
 
