@@ -1,12 +1,20 @@
 terraform {
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "6.22.1"
     }
+  }
+
+  backend "s3" {
+    bucket         = "ashutsoh-privatelink-infra-terraform-state-file"
+    key            = "terraform.tfstate"
+    region         = "ap-south-1"
+    dynamodb_table = "terraform-lock-table"
+    encrypt        = true
   }
 }
 
 provider "aws" {
-  # Configuration options
+  region = "ap-south-1"
 }
