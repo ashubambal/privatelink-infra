@@ -63,7 +63,7 @@ resource "aws_network_interface" "service-provider-eni" {
 
 resource "aws_eip" "service-provider-eip" {
   network_interface = aws_network_interface.service-provider-eni.id
-  depends_on        = [
+  depends_on = [
     aws_internet_gateway.service-provider-igw,
     aws_instance.ubuntu-machine
   ]
