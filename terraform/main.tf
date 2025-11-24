@@ -1,8 +1,11 @@
 resource "aws_instance" "ubuntu-machine" {
-  ami                  = "ami-02b8269d5e85954ef" # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type
-  instance_type        = "t3.micro"
-  key_name             = aws_key_pair.private-link-key-1.key_name
-  network_interface_id = aws_eip.service-provider-eni.id
+  ami           = "ami-02b8269d5e85954ef" # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type
+  instance_type = "t3.micro"
+  key_name      = aws_key_pair.private-link-key-1.key_name
+  network_interface {
+    network_interface_id = aws_network_interface.service-provider-eni.id
+    device_index         = 0
+  }
   tags = {
     Name  = "infrastructure"
     Owner = "CNC-Team"
