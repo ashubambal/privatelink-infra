@@ -63,5 +63,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1  
 
+      - name: Terraform Plan (create tfplan for apply)
+        env:
+          TF_VAR_public_key: ${{ secrets.PUBLIC_KEY }}
+        run: terraform -chdir=terraform plan -out=tfplan
+
       - name: Terraform Apply
+        env:
+          TF_VAR_public_key: ${{ secrets.PUBLIC_KEY }}
         run: terraform -chdir=terraform apply -auto-approve tfplan
