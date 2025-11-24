@@ -1,0 +1,56 @@
+name: PR Checker Bot
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  pr-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run PR Checker Bot
+        uses: privatelink-infra/.github/actions/pr-checker-bot@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          reviewers: '["ashubambal"]'
+          ignore-labels: '["skip-pr-check"]'
+          required-approvals: 1
+          comment-on-pr: true
+          delete-bot-comments: true
+          welcome-message: 'Thank you for your contribution! A PR Checker Bot will review your changes shortly.'
+          approval-message: 'This PR has met all the requirements and is approved for merging.'
+          changes-requested-message: 'Please address the requested changes before this PR can be approved.'
+          no-changes-message: 'No changes detected in the PR.'
+          bot-comment-footer: '^(I am a bot, this action was performed automatically.)'
+          pr-check-failure-message: 'The PR Checker Bot has detected issues with your pull request. Please review the comments for details.'
+          pr-check-success-message: 'The PR Checker Bot has reviewed your pull request and found no issues. It is ready for merging.'
+          debug: false
+          fail-on-error: true
+          run-on-labels: '[]'
+          skip-on-labels: '["skip-pr-check"]'
+          file-extensions-to-check: '[".tf", ".yaml", ".yml", ".json", ".md"]'
+          max-lines-to-check: 5000
+          excluded-paths: '[".github/workflows/terraform-plan.yaml"]'
+          included-paths: '[]'
+          terraform-version: '1.7.5'
+          aws-region: 'ap-south-1'
+          terraform-format-check: true
+          terraform-validate-check: true
+          terraform-init-check: true
+          terraform-plan-check: true
+          tf-var-secrets: '{"public_key": "${{ secrets.PUBLIC_KEY }}"}'
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          plan-output-file: 'tfplan'
+          comment-plan-output: true
+          max-plan-output-lines: 50
+          hide-plan-output: false
+          plan-output-collapse: true
+          apply-check: false
+          apply-on-push-to-main: false
+          apply-approval-message: 'The Terraform plan has been applied successfully on the main branch.'
+          apply-failure-message: 'Failed to apply the Terraform plan on the main branch.'
+          apply-success-message: 'The Terraform plan has been applied successfully on the main branch.'
+          notify-on-failure: true
+          notify-on-success: true
