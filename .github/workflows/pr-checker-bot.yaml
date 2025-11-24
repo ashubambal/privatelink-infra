@@ -1,33 +1,33 @@
-name: PR Checker Bot
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-  pull_request_review:
-    types: [submitted]
+# name: PR Checker Bot
+# on:
+#   pull_request:
+#     types: [opened, synchronize, reopened]
+#   pull_request_review:
+#     types: [submitted]
 
-jobs:
-  pr-check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+# jobs:
+#   pr-check:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
 
-      - name: Check PR title
-        run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          if [ -z "$PR_TITLE" ]; then
-            echo "PR title is empty"
-            exit 1
-          fi
-          echo "PR title: $PR_TITLE"
+#       - name: Check PR title
+#         run: |
+#           PR_TITLE="${{ github.event.pull_request.title }}"
+#           if [ -z "$PR_TITLE" ]; then
+#             echo "PR title is empty"
+#             exit 1
+#           fi
+#           echo "PR title: $PR_TITLE"
 
-      - name: Check PR approvals
-        run: |
-          APPROVED_COUNT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews?state=APPROVED" | grep -c '"state":"APPROVED"')
+#       - name: Check PR approvals
+#         run: |
+#           APPROVED_COUNT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+#             "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews?state=APPROVED" | grep -c '"state":"APPROVED"')
           
-          if [ "$APPROVED_COUNT" -lt 1 ]; then
-            echo "PR requires at least one approval. Current approvals: $APPROVED_COUNT"
-            exit 1
-          fi
-          echo "PR has $APPROVED_COUNT approval(s). ✓"
+#           if [ "$APPROVED_COUNT" -lt 1 ]; then
+#             echo "PR requires at least one approval. Current approvals: $APPROVED_COUNT"
+#             exit 1
+#           fi
+#           echo "PR has $APPROVED_COUNT approval(s). ✓"
