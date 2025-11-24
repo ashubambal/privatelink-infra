@@ -65,7 +65,7 @@ jobs:
 
       # Plan job (PR) uses no backend
       - name: Terraform Init (no backend for PR)
-        run: terraform -chdir=terraform init -backend=false
+        run: terraform -chdir=terraform init init -reconfigure
 
       - name: Terraform Plan (create tfplan for apply)
         env:
