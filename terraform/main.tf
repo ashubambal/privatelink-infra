@@ -2,9 +2,8 @@ resource "aws_instance" "ubuntu-machine" {
   ami           = "ami-02b8269d5e85954ef" # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type
   instance_type = "t3.micro"
   key_name      = aws_key_pair.private-link-key-1.key_name
-  network_interface {
+  primary_network_interface {
     network_interface_id = aws_network_interface.service-provider-eni.id
-    device_index         = 0
   }
   tags = {
     Name  = "infrastructure"
@@ -64,7 +63,10 @@ resource "aws_network_interface" "service-provider-eni" {
 
 resource "aws_eip" "service-provider-eip" {
   network_interface = aws_network_interface.service-provider-eni.id
-  depends_on        = [aws_internet_gateway.service-provider-igw]
+  depends_on = [
+    aws_internet_gateway.service-provider-igw,
+    aws_instance.ubuntu-machine
+  ]
   tags = {
     Name  = "service-provider-eip"
     Owner = "CNC-Team"
