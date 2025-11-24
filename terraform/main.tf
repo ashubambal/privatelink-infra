@@ -1,8 +1,8 @@
 resource "aws_instance" "ubuntu-machine" {
-  ami                    = "ami-02b8269d5e85954ef" # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type
-  instance_type          = "t3.micro"
-  key_name               = aws_key_pair.private-link-key-1.key_name
-  vpc_security_group_ids = [aws_security_group.private-sg.id]
+  ami                  = "ami-02b8269d5e85954ef" # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type
+  instance_type        = "t3.micro"
+  key_name             = aws_key_pair.private-link-key-1.key_name
+  network_interface_id = aws_eip.service-provider-eni.id
   tags = {
     Name  = "infrastructure"
     Owner = "CNC-Team"
@@ -21,15 +21,15 @@ resource "aws_internet_gateway" "service-provider-igw" {
 
 resource "aws_route_table" "service-provider-public-rt" {
   vpc_id = aws_vpc.service-provider-vpc.id
-route {
-  cidr_block = "0.0.0.0/0"
-  gateway_id = aws_internet_gateway.service-provider-igw.id
-}  
-tags = {
-  Name  = "service-provider-public-rt"
-  Owner = "CNC-Team"
-  email = "cnc@nice.com"
-}
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.service-provider-igw.id
+  }
+  tags = {
+    Name  = "service-provider-public-rt"
+    Owner = "CNC-Team"
+    email = "cnc@nice.com"
+  }
 }
 
 resource "aws_subnet" "service-provider-public-subnet" {
@@ -40,7 +40,7 @@ resource "aws_subnet" "service-provider-public-subnet" {
     Name  = "service-provider-public-subnet"
     Owner = "CNC-Team"
     email = "cnc@nice.com"
-}
+  }
 }
 
 resource "aws_route_table_association" "public-rt-association" {
@@ -50,14 +50,25 @@ resource "aws_route_table_association" "public-rt-association" {
 
 resource "aws_network_interface" "service-provider-eni" {
   subnet_id       = aws_subnet.service-provider-public-subnet.id
-  private_ips    = ["11.0.3.13"]
+  private_ips     = ["11.0.3.13"]
   security_groups = [aws_security_group.private-sg.id]
   tags = {
     Name  = "service-provider-eni"
     Owner = "CNC-Team"
     email = "cnc@nice.com"
-  }  
+  }
 }
+
+resource "aws_eip" "service-provider-eip" {
+  network_interface = aws_network_interface.service-provider-eni.id
+  depends_on        = [aws_internet_gateway.service-provider-igw]
+  tags = {
+    Name  = "service-provider-eip"
+    Owner = "CNC-Team"
+    email = "cnc@nice.com"
+  }
+}
+
 # resource "aws_route_table" "service-provider-private-rt" {
 #   vpc_id = aws_vpc.service-provider-vpc.id
 #   route = {
