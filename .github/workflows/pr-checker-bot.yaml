@@ -1,9 +1,9 @@
 name: PR Checker Bot
 on:
   pull_request:
-    types: [opened, synchronize, reopened, review_requested]
+    types: [opened, synchronize, reopened]
   pull_request_review:
-    types: [submitted, dismissed]
+    types: [submitted]
 
 jobs:
   pr-check:
@@ -23,7 +23,6 @@ jobs:
 
       - name: Check PR approvals
         run: |
-          APPROVALS=${{ github.event.pull_request.review_comments }}
           APPROVED_COUNT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews?state=APPROVED" | grep -c '"state":"APPROVED"')
           
