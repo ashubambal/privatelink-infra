@@ -63,6 +63,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1  
 
+      # Plan job (PR) uses no backend
+      - name: Terraform Init (no backend for PR)
+        run: terraform -chdir=terraform init -backend=false
+
       - name: Terraform Plan (create tfplan for apply)
         env:
           TF_VAR_public_key: ${{ secrets.PUBLIC_KEY }}
