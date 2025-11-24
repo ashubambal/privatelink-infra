@@ -12,8 +12,7 @@ resource "aws_instance" "ubuntu-machine" {
 
 resource "aws_key_pair" "private-link-key-1" {
   key_name   = "private-key"
-  public_key = file("C:\\Users\\Admin\\Desktop\\Ashutsoh\\Git\\privatelink-infra\\terraform\\private-key.pub")
-
+  public_key = var.public_key
 }
 
 resource "aws_default_vpc" "default" {
