@@ -40,3 +40,5 @@ jobs:
 
       - name: Terraform Plan
         run: terraform -chdir=terraform plan -out=tfplan
+        env:
+          TF_VAR_public_key: ${{ secrets.PUBLIC_KEY }}
