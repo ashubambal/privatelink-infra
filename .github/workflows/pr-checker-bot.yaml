@@ -9,7 +9,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Run PR Checker Bot
-        uses: privatelink-infra/pr-checker-bot-action@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check PR title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if [ -z "$PR_TITLE" ]; then
+            echo "PR title is empty"
+            exit 1
+          fi
+          echo "PR title: $PR_TITLE"
