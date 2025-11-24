@@ -145,3 +145,5 @@ resource "aws_security_group" "private-sg" {
     email = "cnc@nice.com"
   }
 }
+
+# ok
