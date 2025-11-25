@@ -1,60 +1,48 @@
 #!/bin/bash
 
-# ----------------------------------------
-# Disable IPv6 System Wide
-# ----------------------------------------
-echo "Disabling IPv6..."
-sudo tee /etc/sysctl.d/99-disable-ipv6.conf <<EOF
-net.ipv6.conf.all.disable_ipv6 = 1
-net.ipv6.conf.default.disable_ipv6 = 1
+# Disable IPv6
+echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.d/99-disable-ipv6.conf
+echo "net.ipv6.conf.default.disable_ipv6 = 1" >> /etc/sysctl.d/99-disable-ipv6.conf
+sysctl -p
+
+# Update system
+sudo dnf update -y
+
+# Install Java 17
+sudo dnf install java-17-amazon-corretto -y
+
+# Create Jenkins directory
+sudo mkdir -p /opt/jenkins
+cd /opt/jenkins
+
+# Download Jenkins WAR
+sudo wget -4 https://updates.jenkins-ci.org/latest/jenkins.war
+
+# Create systemd service
+sudo tee /etc/systemd/system/jenkins.service <<EOF
+[Unit]
+Description=Jenkins CI
+After=network.target
+
+[Service]
+User=ec2-user
+WorkingDirectory=/opt/jenkins
+ExecStart=/usr/bin/java -jar /opt/jenkins/jenkins.war --httpPort=8080
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target
 EOF
 
-sudo sysctl -p
-
-# ----------------------------------------
-# Update system packages
-# ----------------------------------------
-sudo yum update -y
-
-# ----------------------------------------
-# Install Java (required for Jenkins)
-# ----------------------------------------
-sudo amazon-linux-extras install java-openjdk11 -y 2>/dev/null || sudo yum install java-11-openjdk -y
-
-# Verify Java
-java -version
-
-# ----------------------------------------
-# Download Jenkins Repo using IPv4
-# ----------------------------------------
-sudo wget -4 -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
-
-# Import Jenkins Key
-sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
-
-# ----------------------------------------
-# Install Jenkins
-# ----------------------------------------
-sudo yum install jenkins -y --disableplugin=fastestmirror
-
-# Reload systemd and enable service
+# Reload systemd
 sudo systemctl daemon-reload
+
+# Start and enable Jenkins
 sudo systemctl enable jenkins
 sudo systemctl start jenkins
 
-# ----------------------------------------
-# Install and Configure Firewall (Optional)
-# ----------------------------------------
-sudo yum install firewalld -y
-sudo systemctl start firewalld
-sudo systemctl enable firewalld
-
-# Allow Jenkins & SSH through firewall
+# Open firewall port (if firewalld installed)
+sudo dnf install firewalld -y
+sudo systemctl enable firewalld --now
 sudo firewall-cmd --permanent --add-port=8080/tcp
-sudo firewall-cmd --permanent --add-service=ssh
 sudo firewall-cmd --reload
-
-# ----------------------------------------
-# Print Jenkins Status
-# ----------------------------------------
-sudo systemctl status jenkins -l
