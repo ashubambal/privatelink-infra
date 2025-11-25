@@ -35,7 +35,7 @@ resource "aws_subnet" "service-provider-public-subnet-1a" {
 }
 
 resource "aws_route_table_association" "public-rt-association" {
-  subnet_id      = aws_subnet.service-provider-public-subnet.id
+  subnet_id      = aws_subnet.service-provider-public-subnet-1a.id
   route_table_id = aws_route_table.service-provider-public-rt.id
 }
 
@@ -43,7 +43,7 @@ resource "aws_network_interface" "service-provider-eni" {
   subnet_id       = aws_subnet.service-provider-public-subnet.id
   private_ips     = ["11.0.3.13"]
   security_groups = [aws_security_group.private-sg.id]
-  tags            = var.tags
+  tags            = merge(local.common_tags, { Name = local.eni_name })
 }
 
 resource "aws_eip" "service-provider-eip" {
