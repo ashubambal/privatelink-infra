@@ -1,2 +1,1 @@
 # privatelink-infra
-privatelink-infra
