@@ -23,13 +23,18 @@ variable "vpc_id" {
 }
 
 variable "tags" {
-  description = "Tags to apply on resource"
+  description = "common tags for resources"
   type        = map(string)
   default = {
-    Name  = "service-provider"
     Owner = "devops-team"
     email = "devops@softconsist.com"
   }
+}
+
+variable "base_name" {
+  description = "Base name for resources"
+  type        = string
+  default     = "service-provider"
 }
 
 variable "cidr_block" {
