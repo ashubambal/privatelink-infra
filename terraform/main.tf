@@ -6,13 +6,7 @@ resource "aws_instance" "ubuntu-machine" {
     network_interface_id = aws_network_interface.service-provider-eni.id
   }
   tags      = var.tags
-  user_data = <<-EOF
-              #!/bin/bash
-              apt-get update -y
-              apt-get install nginx -y
-              systemctl start nginx
-              systemctl enable nginx
-              EOF
+  user_data = file("$./script.sh")
 }
 
 resource "aws_internet_gateway" "service-provider-igw" {
