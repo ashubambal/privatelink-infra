@@ -15,9 +15,13 @@ on:
       - auto_merge_enabled
       - auto_merge_disabled
       - submitted
+  schedule:
+    - cron: "* * * * *"   # Runs every minute
   pull_request_review:
     types:
       - submitted
+      - edited
+      - dismissed
 
 jobs:
   check-approval:
