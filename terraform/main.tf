@@ -86,9 +86,9 @@ resource "aws_eip" "service-provider-eip" {
 # }
 
 resource "aws_key_pair" "private-link-key-1" {
-  key_name = "private-key"
-  # public_key = var.public_key
-  public_key = "private-key.pub"
+  key_name   = "private-key"
+  public_key = var.public_key
+  # public_key = "private-key.pub"
 }
 
 resource "aws_vpc" "service-provider-vpc" {
