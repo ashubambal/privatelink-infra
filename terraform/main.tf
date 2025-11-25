@@ -1,4 +1,4 @@
-# This resource will create an EC2 instance 1
+# This resource will create an EC2 instance
 
 resource "aws_instance" "ubuntu-machine" {
   ami           = var.ami
