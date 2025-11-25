@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Update package lists
+sudo apt-get update -y
+
 # Disable IPv6 system-wide
 echo 'net.ipv6.conf.all.disable_ipv6 = 1' | sudo tee -a /etc/sysctl.conf
 echo 'net.ipv6.conf.default.disable_ipv6 = 1' | sudo tee -a /etc/sysctl.conf
