@@ -1,136 +1,136 @@
-# This resource will create an EC2 instance
+# # This resource will create an EC2 instance
 
-resource "aws_instance" "ubuntu-machine" {
-  ami           = var.ami
-  instance_type = var.instance_type
-  key_name      = aws_key_pair.private-link-key-1.key_name
-  primary_network_interface {
-    network_interface_id = aws_network_interface.service-provider-eni.id
-  }
-  tags      = merge(local.common_tags, { Name = var.base_name })
-  user_data = file("./script.sh")
-}
-
-# This resource will create a igw and attach it to VPC
-resource "aws_internet_gateway" "service-provider-igw" {
-  vpc_id = aws_vpc.service-provider-vpc.id
-  tags   = merge(local.common_tags, { Name = local.igw_name })
-}
-
-# This resource will create a route table and associate it with subnet
-resource "aws_route_table" "service-provider-public-rt" {
-  vpc_id = aws_vpc.service-provider-vpc.id
-  route {
-    cidr_block = var.route_cidr_block
-    gateway_id = aws_internet_gateway.service-provider-igw.id
-  }
-  tags = merge(local.common_tags, { Name = local.public_rt_name })
-}
-
-# This resource will create a public subnet in VPC
-resource "aws_subnet" "service-provider-public-subnet-1a" {
-  vpc_id                  = aws_vpc.service-provider-vpc.id
-  cidr_block              = var.subnet_cidr_block
-  map_public_ip_on_launch = true
-  tags                    = merge(local.common_tags, { Name = local.public_subnet_name })
-}
-
-# This resource will associate route table with subnet
-resource "aws_route_table_association" "public-rt-association" {
-  subnet_id      = aws_subnet.service-provider-public-subnet-1a.id
-  route_table_id = aws_route_table.service-provider-public-rt.id
-}
-
-# This resource will create a network interface
-resource "aws_network_interface" "service-provider-eni" {
-  subnet_id       = aws_subnet.service-provider-public-subnet-1a.id
-  private_ips     = ["11.0.3.13"]
-  security_groups = [aws_security_group.private-sg.id]
-  tags            = merge(local.common_tags, { Name = local.eni_name })
-}
-
-# This resource will create an elastic IP and associate it with network interface
-resource "aws_eip" "service-provider-eip" {
-  network_interface = aws_network_interface.service-provider-eni.id
-  depends_on = [
-    aws_internet_gateway.service-provider-igw,
-    aws_instance.ubuntu-machine
-  ]
-  tags = merge(local.common_tags, { Name = "service-provider-eip" })
-}
-
-# resource "aws_route_table" "service-provider-private-rt" {
-#   vpc_id = aws_vpc.service-provider-vpc.id
-#   route = {
-#     cidr_block = "0.0.0.0/0"}
-#   tags = {
-#     Name  = "service-provider-private-rt"
-#     Owner = "CNC-Team"
-#     email = "cnc@nice.com"
+# resource "aws_instance" "ubuntu-machine" {
+#   ami           = var.ami
+#   instance_type = var.instance_type
+#   key_name      = aws_key_pair.private-link-key-1.key_name
+#   primary_network_interface {
+#     network_interface_id = aws_network_interface.service-provider-eni.id
 #   }
+#   tags      = merge(local.common_tags, { Name = var.base_name })
+#   user_data = file("./script.sh")
 # }
 
-# This resource will create a key pair
-resource "aws_key_pair" "private-link-key-1" {
-  key_name   = "private-key"
-  public_key = var.public_key
-  # public_key = "private-key.pub"
-}
+# # This resource will create a igw and attach it to VPC
+# resource "aws_internet_gateway" "service-provider-igw" {
+#   vpc_id = aws_vpc.service-provider-vpc.id
+#   tags   = merge(local.common_tags, { Name = local.igw_name })
+# }
 
-# This resource will create a VPC
-resource "aws_vpc" "service-provider-vpc" {
-  cidr_block = var.cidr_block
-  tags       = merge(local.common_tags, { Name = local.vpc_name })
-}
+# # This resource will create a route table and associate it with subnet
+# resource "aws_route_table" "service-provider-public-rt" {
+#   vpc_id = aws_vpc.service-provider-vpc.id
+#   route {
+#     cidr_block = var.route_cidr_block
+#     gateway_id = aws_internet_gateway.service-provider-igw.id
+#   }
+#   tags = merge(local.common_tags, { Name = local.public_rt_name })
+# }
 
-# This resource will create a security group
-resource "aws_security_group" "private-sg" {
-  name        = "private-sg"
-  description = "Security group for private link instance"
-  vpc_id      = aws_vpc.service-provider-vpc.id
+# # This resource will create a public subnet in VPC
+# resource "aws_subnet" "service-provider-public-subnet-1a" {
+#   vpc_id                  = aws_vpc.service-provider-vpc.id
+#   cidr_block              = var.subnet_cidr_block
+#   map_public_ip_on_launch = true
+#   tags                    = merge(local.common_tags, { Name = local.public_subnet_name })
+# }
 
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
-  }
+# # This resource will associate route table with subnet
+# resource "aws_route_table_association" "public-rt-association" {
+#   subnet_id      = aws_subnet.service-provider-public-subnet-1a.id
+#   route_table_id = aws_route_table.service-provider-public-rt.id
+# }
 
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+# # This resource will create a network interface
+# resource "aws_network_interface" "service-provider-eni" {
+#   subnet_id       = aws_subnet.service-provider-public-subnet-1a.id
+#   private_ips     = ["11.0.3.13"]
+#   security_groups = [aws_security_group.private-sg.id]
+#   tags            = merge(local.common_tags, { Name = local.eni_name })
+# }
 
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+# # This resource will create an elastic IP and associate it with network interface
+# resource "aws_eip" "service-provider-eip" {
+#   network_interface = aws_network_interface.service-provider-eni.id
+#   depends_on = [
+#     aws_internet_gateway.service-provider-igw,
+#     aws_instance.ubuntu-machine
+#   ]
+#   tags = merge(local.common_tags, { Name = "service-provider-eip" })
+# }
 
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+# # resource "aws_route_table" "service-provider-private-rt" {
+# #   vpc_id = aws_vpc.service-provider-vpc.id
+# #   route = {
+# #     cidr_block = "0.0.0.0/0"}
+# #   tags = {
+# #     Name  = "service-provider-private-rt"
+# #     Owner = "CNC-Team"
+# #     email = "cnc@nice.com"
+# #   }
+# # }
 
-  ingress {
-    from_port   = 3306
-    to_port     = 3306
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+# # This resource will create a key pair
+# resource "aws_key_pair" "private-link-key-1" {
+#   key_name   = "private-key"
+#   public_key = var.public_key
+#   # public_key = "private-key.pub"
+# }
 
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+# # This resource will create a VPC
+# resource "aws_vpc" "service-provider-vpc" {
+#   cidr_block = var.cidr_block
+#   tags       = merge(local.common_tags, { Name = local.vpc_name })
+# }
 
-  tags = merge(local.common_tags, { Name = local.security_groups })
-}
+# # This resource will create a security group
+# resource "aws_security_group" "private-sg" {
+#   name        = "private-sg"
+#   description = "Security group for private link instance"
+#   vpc_id      = aws_vpc.service-provider-vpc.id
+
+#   egress {
+#     from_port        = 0
+#     to_port          = 0
+#     protocol         = "-1"
+#     cidr_blocks      = ["0.0.0.0/0"]
+#     ipv6_cidr_blocks = ["::/0"]
+#   }
+
+#   ingress {
+#     from_port   = 22
+#     to_port     = 22
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   ingress {
+#     from_port   = 80
+#     to_port     = 80
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   ingress {
+#     from_port   = 443
+#     to_port     = 443
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   ingress {
+#     from_port   = 3306
+#     to_port     = 3306
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   ingress {
+#     from_port   = 8080
+#     to_port     = 8080
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   tags = merge(local.common_tags, { Name = local.security_groups })
+# }
