@@ -1,4 +1,4 @@
-# This resource will create an EC2 instance
+# This resource will create an EC2 instance 1
 
 resource "aws_instance" "ubuntu-machine" {
   ami           = var.ami
@@ -7,7 +7,7 @@ resource "aws_instance" "ubuntu-machine" {
   primary_network_interface {
     network_interface_id = aws_network_interface.service-provider-eni.id
   }
-  tags      = var.tags
+  tags      = merge(local.common_tags, { Name = var.base_name })
   user_data = file("./script.sh")
 }
 
