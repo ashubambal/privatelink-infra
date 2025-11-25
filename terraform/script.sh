@@ -1,28 +1,18 @@
 #!/bin/bash
+set -e
 
-# This script installs and starts Nginx on Ubuntu
+# Disable IPv6 system-wide
+echo 'net.ipv6.conf.all.disable_ipv6 = 1' | sudo tee -a /etc/sysctl.conf
+echo 'net.ipv6.conf.default.disable_ipv6 = 1' | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
 
-# Update package list
-echo "Updating package list..."
-sudo apt update -y
+# Update and install NGINX using IPv4
+sudo apt-get update -o Acquire::ForceIPv4=true -y
+sudo apt-get install -o Acquire::ForceIPv4=true -y nginx
 
-# Install Nginx
-echo "Installing Nginx..."
-sudo apt install nginx -y
-
-# Start and enable Nginx service
-echo "Starting Nginx service..."
+# Start and enable NGINX
+sudo systemctl enable nginx
 sudo systemctl start nginx
 
-echo "Enabling Nginx to start on boot..."
-sudo systemctl enable nginx
-
-# Allow firewall rules (optional)
-echo "Allowing HTTP and HTTPS in UFW..."
-sudo ufw allow 'Nginx Full'
-
-# Print status
-echo "Checking Nginx status..."
-systemctl status nginx
-
-echo "Nginx installation and setup completed successfully!"
+# Optional: Add welcome page
+echo "<h1>NGINX is running on Ubuntu</h1>" | sudo tee /var/www/html/index.html
