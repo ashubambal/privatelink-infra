@@ -5,7 +5,7 @@ resource "aws_instance" "ubuntu-machine" {
   primary_network_interface {
     network_interface_id = aws_network_interface.service-provider-eni.id
   }
-  tags      = var.tags
+  tags = var.tags
   # user_data = file("./script.sh")
   user_data = file("${path.module}/jenkins_script.sh")
 }
