@@ -1,48 +1,32 @@
 resource "aws_instance" "ubuntu-machine" {
-  ami           = "ami-02b8269d5e85954ef" # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type
-  instance_type = "t3.micro"
+  ami           = var.ami
+  instance_type = var.instance_type
   key_name      = aws_key_pair.private-link-key-1.key_name
   primary_network_interface {
     network_interface_id = aws_network_interface.service-provider-eni.id
   }
-  tags = {
-    Name  = "infrastructure"
-    Owner = "CNC-Team"
-    email = "cnc@nice.com"
-  }
+  tags = var.tags
 }
 
 resource "aws_internet_gateway" "service-provider-igw" {
   vpc_id = aws_vpc.service-provider-vpc.id
-  tags = {
-    Name  = "service-provider-igw"
-    Owner = "CNC-Team"
-    email = "cnc@nice.com"
-  }
+  tags   = var.tags
 }
 
 resource "aws_route_table" "service-provider-public-rt" {
   vpc_id = aws_vpc.service-provider-vpc.id
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block = var.route_cidr_block
     gateway_id = aws_internet_gateway.service-provider-igw.id
   }
-  tags = {
-    Name  = "service-provider-public-rt"
-    Owner = "CNC-Team"
-    email = "cnc@nice.com"
-  }
+  tags = var.tags
 }
 
 resource "aws_subnet" "service-provider-public-subnet" {
   vpc_id                  = aws_vpc.service-provider-vpc.id
-  cidr_block              = "11.0.3.0/24"
+  cidr_block              = var.subnet_cidr_block
   map_public_ip_on_launch = true
-  tags = {
-    Name  = "service-provider-public-subnet"
-    Owner = "CNC-Team"
-    email = "cnc@nice.com"
-  }
+  tags                    = var.tags
 }
 
 resource "aws_route_table_association" "public-rt-association" {
@@ -54,11 +38,7 @@ resource "aws_network_interface" "service-provider-eni" {
   subnet_id       = aws_subnet.service-provider-public-subnet.id
   private_ips     = ["11.0.3.13"]
   security_groups = [aws_security_group.private-sg.id]
-  tags = {
-    Name  = "service-provider-eni"
-    Owner = "CNC-Team"
-    email = "cnc@nice.com"
-  }
+  tags            = var.tags
 }
 
 resource "aws_eip" "service-provider-eip" {
@@ -67,11 +47,7 @@ resource "aws_eip" "service-provider-eip" {
     aws_internet_gateway.service-provider-igw,
     aws_instance.ubuntu-machine
   ]
-  tags = {
-    Name  = "service-provider-eip"
-    Owner = "CNC-Team"
-    email = "cnc@nice.com"
-  }
+  tags = var.tags
 }
 
 # resource "aws_route_table" "service-provider-private-rt" {
@@ -92,13 +68,10 @@ resource "aws_key_pair" "private-link-key-1" {
 }
 
 resource "aws_vpc" "service-provider-vpc" {
-  cidr_block = "11.0.0.0/16"
-  tags = {
-    Name  = "service-provider-vpc"
-    Owner = "CNC-Team"
-    email = "cnc@nice.com"
-  }
+  cidr_block = var.cidr_block
+  tags       = var.tags
 }
+
 resource "aws_security_group" "private-sg" {
   name        = "private-sg"
   description = "Security group for private link instance"
@@ -139,10 +112,5 @@ resource "aws_security_group" "private-sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  tags = {
-    Name  = "infrastructure"
-    Owner = "CNC-Team"
-    email = "cnc@nice.com"
-  }
+  tags = var.tags
 }
