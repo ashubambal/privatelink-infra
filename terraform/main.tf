@@ -9,10 +9,9 @@ resource "aws_instance" "ubuntu-machine" {
   user_data = <<-EOF
               #!/bin/bash
               apt-get update -y
-              apt-get install apache2 -y
-              systemctl start apache2
-              systemctl enable apache2
-              echo "<h1>Welcome to PrivateLink Service Provider VPC</h1>" > /var/www/html/index.html
+              apt-get install nginx -y
+              systemctl start nginx
+              systemctl enable nginx
               EOF
 }
 
