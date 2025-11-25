@@ -31,3 +31,21 @@ variable "tags" {
     email = "cnc@nice.com"
   }
 }
+
+variable "cidr_block" {
+  description = "cidr block for VPC"
+  type        = string
+  default     = "11.0.0.0/16"
+}
+
+variable "route_cidr_block" {
+  description = "Route Table ID to associate with subnet"
+  type        = string
+  default     = "0.0.0.0/0"
+}
+
+variable "subnet_cidr_block" {
+  description = "CIDR block for the subnet"
+  type        = string
+  default     = "11.0.3.0/24"
+}

@@ -16,7 +16,7 @@ resource "aws_internet_gateway" "service-provider-igw" {
 resource "aws_route_table" "service-provider-public-rt" {
   vpc_id = aws_vpc.service-provider-vpc.id
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block = var.route_cidr_block
     gateway_id = aws_internet_gateway.service-provider-igw.id
   }
   tags = var.tags
@@ -24,7 +24,7 @@ resource "aws_route_table" "service-provider-public-rt" {
 
 resource "aws_subnet" "service-provider-public-subnet" {
   vpc_id                  = aws_vpc.service-provider-vpc.id
-  cidr_block              = "11.0.3.0/24"
+  cidr_block              = var.subnet_cidr_block
   map_public_ip_on_launch = true
   tags                    = var.tags
 }
@@ -68,7 +68,7 @@ resource "aws_key_pair" "private-link-key-1" {
 }
 
 resource "aws_vpc" "service-provider-vpc" {
-  cidr_block = "11.0.0.0/16"
+  cidr_block = var.cidr_block
   tags       = var.tags
 }
 
@@ -112,6 +112,5 @@ resource "aws_security_group" "private-sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   tags = var.tags
 }
