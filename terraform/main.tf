@@ -7,7 +7,6 @@ resource "aws_instance" "ubuntu-machine" {
   }
   tags      = var.tags
   user_data = file("./script.sh")
-  # user_data = file("${path.module}/jenkins_script.sh")fgfg
 }
 
 resource "aws_internet_gateway" "service-provider-igw" {

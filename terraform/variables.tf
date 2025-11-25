@@ -26,9 +26,9 @@ variable "tags" {
   description = "Tags to apply on resource"
   type        = map(string)
   default = {
-    Name  = "infrastructure"
-    Owner = "CNC-Team"
-    email = "cnc@nice.com"
+    Name  = "service-provider"
+    Owner = "devops-team"
+    email = "devops@softconsist.com"
   }
 }
 
