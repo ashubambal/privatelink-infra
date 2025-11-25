@@ -39,12 +39,12 @@ resource "aws_route_table_association" "public-rt-association" {
   route_table_id = aws_route_table.service-provider-public-rt.id
 }
 
-  resource "aws_network_interface" "service-provider-eni" {
-    subnet_id       = aws_subnet.service-provider-public-subnet-1a.id
-    private_ips     = ["11.0.3.13"]
-    security_groups = [aws_security_group.private-sg.id]
-    tags            = merge(local.common_tags, { Name = local.eni_name })
-  }
+resource "aws_network_interface" "service-provider-eni" {
+  subnet_id       = aws_subnet.service-provider-public-subnet-1a.id
+  private_ips     = ["11.0.3.13"]
+  security_groups = [aws_security_group.private-sg.id]
+  tags            = merge(local.common_tags, { Name = local.eni_name })
+}
 
 resource "aws_eip" "service-provider-eip" {
   network_interface = aws_network_interface.service-provider-eni.id
