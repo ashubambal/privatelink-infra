@@ -13,7 +13,7 @@ variable "instance_type" {
 variable "ami" {
   description = "ami id for EC2 instance"
   type        = string
-  default     = "ami-02b8269d5e85954ef"
+  default     = "ami-0d176f79571d18a8f"
 }
 
 variable "vpc_id" {
