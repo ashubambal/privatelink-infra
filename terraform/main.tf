@@ -1,3 +1,5 @@
+# This resource will create an EC2 instance
+
 resource "aws_instance" "ubuntu-machine" {
   ami           = var.ami
   instance_type = var.instance_type
@@ -9,11 +11,13 @@ resource "aws_instance" "ubuntu-machine" {
   user_data = file("./script.sh")
 }
 
+# This resource will create a igw and attach it to VPC
 resource "aws_internet_gateway" "service-provider-igw" {
   vpc_id = aws_vpc.service-provider-vpc.id
-  tags   = var.tags
+  tags   = merge(local.common_tags, { Name = local.igw_name })
 }
 
+# This resource will create a route table and associate it with subnet
 resource "aws_route_table" "service-provider-public-rt" {
   vpc_id = aws_vpc.service-provider-vpc.id
   route {
@@ -23,23 +27,23 @@ resource "aws_route_table" "service-provider-public-rt" {
   tags = var.tags
 }
 
-resource "aws_subnet" "service-provider-public-subnet" {
+resource "aws_subnet" "service-provider-public-subnet-1a" {
   vpc_id                  = aws_vpc.service-provider-vpc.id
   cidr_block              = var.subnet_cidr_block
   map_public_ip_on_launch = true
-  tags                    = var.tags
+  tags                    = merge(local.common_tags, { Name = local.public_subnet_name })
 }
 
 resource "aws_route_table_association" "public-rt-association" {
-  subnet_id      = aws_subnet.service-provider-public-subnet.id
+  subnet_id      = aws_subnet.service-provider-public-subnet-1a.id
   route_table_id = aws_route_table.service-provider-public-rt.id
 }
 
 resource "aws_network_interface" "service-provider-eni" {
-  subnet_id       = aws_subnet.service-provider-public-subnet.id
+  subnet_id       = aws_subnet.service-provider-public-subnet-1a.id
   private_ips     = ["11.0.3.13"]
   security_groups = [aws_security_group.private-sg.id]
-  tags            = var.tags
+  tags            = merge(local.common_tags, { Name = local.eni_name })
 }
 
 resource "aws_eip" "service-provider-eip" {
@@ -70,7 +74,7 @@ resource "aws_key_pair" "private-link-key-1" {
 
 resource "aws_vpc" "service-provider-vpc" {
   cidr_block = var.cidr_block
-  tags       = var.tags
+  tags       = merge(local.common_tags, { Name = local.vpc_name })
 }
 
 resource "aws_security_group" "private-sg" {
