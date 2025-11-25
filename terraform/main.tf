@@ -5,7 +5,15 @@ resource "aws_instance" "ubuntu-machine" {
   primary_network_interface {
     network_interface_id = aws_network_interface.service-provider-eni.id
   }
-  tags = var.tags
+  tags      = var.tags
+  user_data = <<-EOF
+              #!/bin/bash
+              apt-get update -y
+              apt-get install apache2 -y
+              systemctl start apache2
+              systemctl enable apache2
+              echo "<h1>Welcome to PrivateLink Service Provider VPC</h1>" > /var/www/html/index.html
+              EOF
 }
 
 resource "aws_internet_gateway" "service-provider-igw" {
