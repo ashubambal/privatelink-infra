@@ -1,21 +1,11 @@
 #!/bin/bash
-set -e
 
-# Update package lists
-sudo apt-get update -y
+# Update system packages
+sudo yum update -y
 
-# Disable IPv6 system-wide
-echo 'net.ipv6.conf.all.disable_ipv6 = 1' | sudo tee -a /etc/sysctl.conf
-echo 'net.ipv6.conf.default.disable_ipv6 = 1' | sudo tee -a /etc/sysctl.conf
-sudo sysctl -p
+# Install Nginx (Amazon Linux 2 or Amazon Linux 2023)
+sudo amazon-linux-extras install nginx1 -y 2>/dev/null || sudo yum install nginx -y
 
-# Update and install NGINX using IPv4
-sudo apt-get update -o Acquire::ForceIPv4=true -y
-sudo apt-get install -o Acquire::ForceIPv4=true -y nginx
-
-# Start and enable NGINX
-sudo systemctl enable nginx
+# Start Nginx service
 sudo systemctl start nginx
-
-# Optional: Add welcome page
-echo "<h1>NGINX is running on Ubuntu</h1>" | sudo tee /var/www/html/index.html
+sudo systemctl enable nginx
