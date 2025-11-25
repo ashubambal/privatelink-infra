@@ -18,6 +18,12 @@ on:
     types:
       - submitted
 
+# allow requests & comments
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+
 jobs:
   check-approval:
     runs-on: ubuntu-latest
@@ -27,15 +33,18 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const core = require('@actions/core');
             const prNumber = context.issue.number;
 
-            // Fetch PR to get the current head SHA
+            // Fetch PR to get the current head SHA and author
             const { data: pr } = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: prNumber
             });
             const headSha = pr.head.sha;
+            const prAuthor = pr.user.login;
+            const isFork = pr.head.repo.full_name !== `${context.repo.owner}/${context.repo.repo}`;
 
             // Fetch all reviews of the PR
             const reviews = await github.rest.pulls.listReviews({
@@ -44,9 +53,10 @@ jobs:
               pull_number: prNumber
             });
 
-            // Keep only the latest review by each reviewer
+            // Keep only the latest review by each reviewer (ignore bots)
             const latestByUser = {};
             reviews.data.forEach(r => {
+              if (!r.user || r.user.type !== "User") return;
               const user = r.user.login;
               if (!latestByUser[user] || new Date(r.submitted_at) > new Date(latestByUser[user].submitted_at)) {
                 latestByUser[user] = r;
@@ -55,11 +65,64 @@ jobs:
 
             const latestReviews = Object.values(latestByUser);
 
-            // Filter approvals that are for the current head commit
+            // Approvals on the current head commit
             const approvalsOnHead = latestReviews.filter(r => r.state === "APPROVED" && r.commit_id === headSha);
+
+            // Approvals on older commits (stale approvals)
+            const staleApprovals = latestReviews
+              .filter(r => r.state === "APPROVED" && r.commit_id !== headSha)
+              .map(r => r.user.login)
+              .filter(u => u !== prAuthor); // don't request review from the PR author
 
             // Check whether any reviewer has an outstanding change request (blocks merging)
             const changeRequests = latestReviews.filter(r => r.state === "CHANGES_REQUESTED");
+
+            // If there are stale approvals, request reviews again from those reviewers (when possible)
+            if (staleApprovals.length > 0) {
+              const reviewersToRequest = Array.from(new Set(staleApprovals));
+
+              if (isFork) {
+                // GITHUB_TOKEN cannot modify PRs from forks with default behavior; just comment/log.
+                try {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: prNumber,
+                    body: `🔔 Heads up: @${prAuthor} pushed new commits. Previously approved reviewers: ${reviewersToRequest.map(u => `@${u}`).join(", ")} — please re-request a review (bot cannot update reviewers for forked PRs).`
+                  });
+                } catch (err) {
+                  console.warn('Cannot comment/request reviewers for forked PRs:', err.message);
+                }
+                console.log('Forked PR: cannot request reviewers via GITHUB_TOKEN');
+              } else {
+                // Exclude already requested reviewers to avoid API 422 errors
+                const alreadyRequested = (pr.requested_reviewers || []).map(r => r.login);
+                const toRequest = reviewersToRequest.filter(r => !alreadyRequested.includes(r));
+
+                if (toRequest.length > 0) {
+                  try {
+                    await github.rest.pulls.requestReviewers({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      pull_number: prNumber,
+                      reviewers: toRequest
+                    });
+
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: prNumber,
+                      body: `🔔 Re-requested review from: ${toRequest.map(u => `@${u}`).join(", ")} because new commits were pushed.`
+                    });
+                    console.log("🔔 Re-requested reviews for:", toRequest);
+                  } catch (err) {
+                    console.warn("Failed to request reviewers:", err.message);
+                  }
+                } else {
+                  console.log("No new reviewers to request (they are already requested).");
+                }
+              }
+            }
 
             if (changeRequests.length > 0) {
               core.setFailed("❌ PR has change requests that must be addressed before merging.");
