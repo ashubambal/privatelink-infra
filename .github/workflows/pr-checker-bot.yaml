@@ -27,20 +27,60 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const core = require('@actions/core');
             const prNumber = context.issue.number;
 
-            // Fetch all reviews of the PR
-            const reviews = await github.rest.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: prNumber
-            });
+            // Helper to sleep
+            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-            // Find approvals
-            const approvedReviews = reviews.data.filter(r => r.state === "APPROVED");
+            // Optionally set allowed reviewers (replace with real GitHub usernames if you want to require them)
+            const allowedReviewers = [
+              'ashubambal',
+              'kalyani-bambal',
+              'ashutoshbambal97',
+              'kalyanibambal05'
+            ].map(x => x.toLowerCase());
 
-            if (approvedReviews.length === 0) {
-              core.setFailed("❌ PR is NOT approved. At least one approval is required.");
-            } else {
-              console.log("✔ Approved by:", approvedReviews.map(r => r.user.login));
+            // If this run is a pull_request_review event, take the review state from the event payload
+            if (context.payload.review && context.payload.review.state) {
+              const state = context.payload.review.state.toUpperCase();
+              if (state === 'APPROVED') {
+                const reviewer = (context.payload.review.user && context.payload.review.user.login) || 'unknown';
+                console.log(`✔ Approved by event from ${reviewer}`);
+                return;
+              }
             }
+
+            // Otherwise, fetch reviews with a few retries (eventual consistency)
+            let approvedReviews = [];
+            for (let attempt = 0; attempt < 5; attempt++) {
+              const reviewsResp = await github.rest.pulls.listReviews({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber
+              });
+
+              approvedReviews = reviewsResp.data.filter(r => r.state && r.state.toUpperCase() === 'APPROVED');
+
+              // Optionally filter to allowed reviewers only:
+              const approvedByAllowed = approvedReviews.filter(r =>
+                allowedReviewers.includes((r.user && r.user.login || '').toLowerCase())
+              );
+
+              if (approvedByAllowed.length > 0) {
+                console.log('✔ Approved by allowed reviewer(s):', approvedByAllowed.map(r => r.user.login));
+                return;
+              }
+
+              // If you don't want to restrict by allowedReviewers, uncomment this:
+              // if (approvedReviews.length > 0) {
+              //   console.log('✔ Approved by:', approvedReviews.map(r => r.user.login));
+              //   return;
+              // }
+
+              // Not found yet — wait and retry
+              await sleep(2000);
+            }
+
+            // If we've reached here, no (allowed) approvals were found
+            core.setFailed("❌ PR is NOT approved by a codeowner/allowed reviewer. At least one approval is required.");
