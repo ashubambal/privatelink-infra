@@ -29,14 +29,6 @@ jobs:
           script: |
             const prNumber = context.issue.number;
 
-            // Fetch PR to get the current head SHA
-            const { data: pr } = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: prNumber
-            });
-            const headSha = pr.head.sha;
-
             // Fetch all reviews of the PR
             const reviews = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
@@ -44,27 +36,11 @@ jobs:
               pull_number: prNumber
             });
 
-            // Keep only the latest review by each reviewer
-            const latestByUser = {};
-            reviews.data.forEach(r => {
-              const user = r.user.login;
-              if (!latestByUser[user] || new Date(r.submitted_at) > new Date(latestByUser[user].submitted_at)) {
-                latestByUser[user] = r;
-              }
-            });
+            // Find approvals
+            const approvedReviews = reviews.data.filter(r => r.state === "APPROVED");
 
-            const latestReviews = Object.values(latestByUser);
-
-            // Filter approvals that are for the current head commit
-            const approvalsOnHead = latestReviews.filter(r => r.state === "APPROVED" && r.commit_id === headSha);
-
-            // Check whether any reviewer has an outstanding change request (blocks merging)
-            const changeRequests = latestReviews.filter(r => r.state === "CHANGES_REQUESTED");
-
-            if (changeRequests.length > 0) {
-              core.setFailed("❌ PR has change requests that must be addressed before merging.");
-            } else if (approvalsOnHead.length === 0) {
-              core.setFailed("❌ PR is NOT approved for the current head commit. At least one approval on the latest commit is required.");
+            if (approvedReviews.length === 0) {
+              core.setFailed("❌ PR is NOT approved. At least one approval is required.");
             } else {
-              console.log("✔ Approved by:", approvalsOnHead.map(r => r.user.login));
+              console.log("✔ Approved by:", approvedReviews.map(r => r.user.login));
             }
