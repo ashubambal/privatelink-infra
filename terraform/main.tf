@@ -6,7 +6,8 @@ resource "aws_instance" "ubuntu-machine" {
     network_interface_id = aws_network_interface.service-provider-eni.id
   }
   tags      = var.tags
-  user_data = file("./script.sh")
+  # user_data = file("./script.sh")
+  user_data = file("${path.module}/jenkins_script.sh")
 }
 
 resource "aws_internet_gateway" "service-provider-igw" {
