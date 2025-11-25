@@ -5,5 +5,7 @@ locals {
   private_subnet_name = "${var.base_name}-private-subnet-1a"
   igw_name            = "${var.base_name}-igw"
   eni_name            = "${var.base_name}-eni"
+  public_rt_name      = "${var.base_name}-public-rt"
+  security_groups     = "${var.base_name}-sg"
 }
 
